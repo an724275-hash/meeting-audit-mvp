@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f5f5" />
+    <title>Разбор встреч · Royal Brick</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/script.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand"><span>Royal Brick</span><span class="brand-divider"></span><span>Разбор встреч</span></div>
+      <span class="header-note">Локальный прототип</span>
+    </header>
+
+    <main class="app-shell">
+      <div class="page-heading">
+        <div>
+          <h1>Новая встреча</h1>
+          <p>Запишите разговор или загрузите аудиофайл, затем проверьте текст и запустите анализ.</p>
+        </div>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite">Готово к записи или загрузке аудио.</p>
+
+      <div class="workspace">
+        <aside class="sidebar" aria-label="Данные встречи">
+          <section class="panel audio-panel" aria-labelledby="audio-title">
+            <div class="panel-heading"><h2 id="audio-title">Аудио</h2><span id="recordTimer" class="timer" aria-live="polite">00:00</span></div>
+            <p class="hint">Перед записью убедитесь, что участники о ней знают.</p>
+
+            <button id="recordButton" class="record-button" type="button"><span class="record-dot" aria-hidden="true"></span><span id="recordLabel">Начать запись</span></button>
+            <button id="uploadButton" class="upload-button" type="button">Выбрать файл</button>
+            <input id="audioFile" type="file" accept=".m4a,.mp3,.wav,.webm,.ogg,.mp4,audio/*" hidden />
+            <p class="file-hint">m4a, mp3, wav, webm, ogg, mp4 · до 100 МБ</p>
+            <p id="fileName" class="filename" aria-live="polite">Файл не выбран</p>
+            <audio id="playback" controls hidden></audio>
+            <button id="transcribeButton" class="button button-secondary full" type="button" disabled>Расшифровать</button>
+          </section>
+
+          <section class="panel details-panel" aria-labelledby="details-title">
+            <div class="panel-heading"><h2 id="details-title">Данные встречи</h2></div>
+            <label class="field-label" for="manager">Менеджер</label>
+            <input id="manager" type="text" placeholder="Имя, если известно" autocomplete="off" />
+            <label class="field-label" for="meetingDate">Дата</label>
+            <input id="meetingDate" type="date" />
+          </section>
+        </aside>
+
+        <div class="content">
+          <section class="panel transcript-panel" aria-labelledby="transcript-title">
+            <div class="panel-heading"><h2 id="transcript-title">Текст встречи</h2></div>
+            <p class="hint">Проверьте расшифровку. Говорящих модель не различает, поэтому при необходимости подпишите реплики вручную.</p>
+            <label class="visually-hidden" for="transcript">Расшифровка разговора</label>
+            <textarea id="transcript" placeholder="Здесь появится расшифровка. Можно также вставить готовый текст."></textarea>
+            <div class="analyze-row">
+              <p class="privacy-note">Для анализа текст отправляется в Codex. Аудио обрабатывается локально.</p>
+              <button id="analyzeButton" class="button button-primary" type="button">Анализировать</button>
+            </div>
+          </section>
+
+          <section class="panel report-section" aria-labelledby="report-title">
+            <div class="panel-heading report-heading">
+              <h2 id="report-title">Отчёт</h2>
+              <button id="downloadButton" class="download-button" type="button" disabled>Скачать Markdown</button>
+            </div>
+            <div id="reportEmpty" class="report-empty">Отчёт появится после анализа текста встречи.</div>
+            <div id="report" class="report" hidden></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
