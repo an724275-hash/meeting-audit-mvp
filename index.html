@@ -3,71 +3,91 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f4f5f5" />
+    <meta name="theme-color" content="#e8ebee" />
     <title>Разбор встреч · Royal Brick</title>
     <link rel="stylesheet" href="/style.css" />
     <script src="/script.js" defer></script>
   </head>
   <body>
     <header class="app-header">
-      <div class="brand"><span>Royal Brick</span><span class="brand-divider"></span><span>Разбор встреч</span></div>
-      <span class="header-note">Локальный прототип</span>
+      <div class="header-inner">
+        <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Royal Brick</span><span class="brand-divider"></span><span class="brand-caption">Разбор встреч</span></div>
+        <button id="changeModeButton" class="header-action" type="button" hidden>Сменить режим</button>
+      </div>
     </header>
 
-    <main class="app-shell">
-      <div class="page-heading">
-        <div>
-          <h1>Новая встреча</h1>
-          <p>Запишите разговор или загрузите аудиофайл, затем проверьте текст и запустите анализ.</p>
+    <main>
+      <section id="modeScreen" class="mode-screen" aria-labelledby="mode-title">
+        <div class="mode-intro">
+          <span class="eyebrow">Разбор разговоров</span>
+          <h1 id="mode-title">Выберите, как работать</h1>
+          <p>Запишите встречу или загрузите файл. После расшифровки проверьте текст и получите отчёт.</p>
         </div>
-      </div>
+        <div class="mode-options">
+          <button class="mode-option" type="button" data-mode="local">
+            <span class="mode-icon local-icon" aria-hidden="true"><span></span></span>
+            <span class="mode-copy"><strong>На этом компьютере</strong><span>Аудио расшифровывает локальная модель. Для отчёта нужен вход в Codex CLI.</span><small>Без ключа API</small></span>
+            <span class="option-arrow" aria-hidden="true">↗</span>
+          </button>
+          <button class="mode-option" type="button" data-mode="api">
+            <span class="mode-icon api-icon" aria-hidden="true"><span></span></span>
+            <span class="mode-copy"><strong>Через OpenAI API</strong><span>Расшифровка и отчёт работают через API. Понадобится ключ с доступным балансом.</span><small>Без установки модели</small></span>
+            <span class="option-arrow" aria-hidden="true">↗</span>
+          </button>
+        </div>
+        <p class="mode-footnote">В обоих режимах текст отчёта обрабатывается облачной моделью. Записи не сохраняются в приложении.</p>
+      </section>
 
-      <p id="status" class="status" role="status" aria-live="polite">Готово к записи или загрузке аудио.</p>
+      <div id="appScreen" class="app-shell" hidden>
+        <div class="page-heading">
+          <div><span id="modeLabel" class="mode-label"></span><h1>Новая встреча</h1><p>Сначала аудио, затем проверка текста и отчёт.</p></div>
+        </div>
 
-      <div class="workspace">
-        <aside class="sidebar" aria-label="Данные встречи">
-          <section class="panel audio-panel" aria-labelledby="audio-title">
-            <div class="panel-heading"><h2 id="audio-title">Аудио</h2><span id="recordTimer" class="timer" aria-live="polite">00:00</span></div>
-            <p class="hint">Перед записью убедитесь, что участники о ней знают.</p>
+        <section id="apiPanel" class="api-panel" aria-labelledby="api-title" hidden>
+          <div class="api-panel-copy"><h2 id="api-title">Ключ OpenAI API</h2><p>Ключ передаётся через этот сервер в OpenAI. Приложение не записывает его в файл или хранилище браузера.</p></div>
+          <div class="api-key-wrap"><label class="visually-hidden" for="apiKey">Ключ OpenAI API</label><input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" autocapitalize="off" spellcheck="false" /></div>
+        </section>
 
-            <button id="recordButton" class="record-button" type="button"><span class="record-dot" aria-hidden="true"></span><span id="recordLabel">Начать запись</span></button>
-            <button id="uploadButton" class="upload-button" type="button">Выбрать файл</button>
-            <input id="audioFile" type="file" accept=".m4a,.mp3,.wav,.webm,.ogg,.mp4,audio/*" hidden />
-            <p class="file-hint">m4a, mp3, wav, webm, ogg, mp4 · до 100 МБ</p>
-            <p id="fileName" class="filename" aria-live="polite">Файл не выбран</p>
-            <audio id="playback" controls hidden></audio>
-            <button id="transcribeButton" class="button button-secondary full" type="button" disabled>Расшифровать</button>
-          </section>
+        <p id="status" class="status" role="status" aria-live="polite">Готово к записи или загрузке аудио.</p>
 
-          <section class="panel details-panel" aria-labelledby="details-title">
-            <div class="panel-heading"><h2 id="details-title">Данные встречи</h2></div>
-            <label class="field-label" for="manager">Менеджер</label>
-            <input id="manager" type="text" placeholder="Имя, если известно" autocomplete="off" />
-            <label class="field-label" for="meetingDate">Дата</label>
-            <input id="meetingDate" type="date" />
-          </section>
-        </aside>
+        <div class="workspace">
+          <aside class="sidebar" aria-label="Данные встречи">
+            <section class="panel audio-panel" aria-labelledby="audio-title">
+              <div class="panel-heading"><h2 id="audio-title">Аудио</h2><span id="recordTimer" class="timer" aria-live="polite">00:00</span></div>
+              <p class="hint">Перед записью убедитесь, что участники о ней знают.</p>
+              <button id="recordButton" class="record-button" type="button"><span class="record-dot" aria-hidden="true"></span><span id="recordLabel">Начать запись</span></button>
+              <button id="uploadButton" class="upload-button" type="button">Выбрать файл</button>
+              <input id="audioFile" type="file" accept=".m4a,.mp3,.wav,.webm,.ogg,.mp4,audio/*" hidden />
+              <p id="fileHint" class="file-hint">m4a, mp3, wav, webm, ogg, mp4 · до 100 МБ</p>
+              <p id="fileName" class="filename" aria-live="polite">Файл не выбран</p>
+              <audio id="playback" controls hidden></audio>
+              <button id="transcribeButton" class="button button-secondary full" type="button" disabled>Расшифровать</button>
+            </section>
 
-        <div class="content">
-          <section class="panel transcript-panel" aria-labelledby="transcript-title">
-            <div class="panel-heading"><h2 id="transcript-title">Текст встречи</h2></div>
-            <p class="hint">Проверьте расшифровку. Говорящих модель не различает, поэтому при необходимости подпишите реплики вручную.</p>
-            <label class="visually-hidden" for="transcript">Расшифровка разговора</label>
-            <textarea id="transcript" placeholder="Здесь появится расшифровка. Можно также вставить готовый текст."></textarea>
-            <div class="analyze-row">
-              <p class="privacy-note">Для анализа текст отправляется в Codex. Аудио обрабатывается локально.</p>
-              <button id="analyzeButton" class="button button-primary" type="button">Анализировать</button>
-            </div>
-          </section>
+            <section class="panel details-panel" aria-labelledby="details-title">
+              <div class="panel-heading"><h2 id="details-title">Данные встречи</h2></div>
+              <label class="field-label" for="manager">Менеджер</label>
+              <input id="manager" type="text" placeholder="Имя, если известно" autocomplete="off" />
+              <label class="field-label" for="meetingDate">Дата</label>
+              <input id="meetingDate" type="date" />
+            </section>
+          </aside>
 
-          <section class="panel report-section" aria-labelledby="report-title">
-            <div class="panel-heading report-heading">
-              <h2 id="report-title">Отчёт</h2>
-              <button id="downloadButton" class="download-button" type="button" disabled>Скачать Markdown</button>
-            </div>
-            <div id="reportEmpty" class="report-empty">Отчёт появится после анализа текста встречи.</div>
-            <div id="report" class="report" hidden></div>
-          </section>
+          <div class="content">
+            <section class="panel transcript-panel" aria-labelledby="transcript-title">
+              <div class="panel-heading"><h2 id="transcript-title">Текст встречи</h2></div>
+              <p class="hint">Проверьте расшифровку. Если нужно, подпишите реплики вручную.</p>
+              <label class="visually-hidden" for="transcript">Расшифровка разговора</label>
+              <textarea id="transcript" placeholder="Здесь появится расшифровка. Можно также вставить готовый текст."></textarea>
+              <div class="analyze-row"><p id="privacyNote" class="privacy-note">Аудио обрабатывается локально. Текст для анализа отправляется в Codex.</p><button id="analyzeButton" class="button button-primary" type="button">Анализировать</button></div>
+            </section>
+
+            <section class="panel report-section" aria-labelledby="report-title">
+              <div class="panel-heading report-heading"><h2 id="report-title">Отчёт</h2><button id="downloadButton" class="download-button" type="button" disabled>Скачать Markdown</button></div>
+              <div id="reportEmpty" class="report-empty">Отчёт появится после анализа текста встречи.</div>
+              <div id="report" class="report" hidden></div>
+            </section>
+          </div>
         </div>
       </div>
     </main>

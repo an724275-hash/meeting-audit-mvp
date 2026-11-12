@@ -7,6 +7,9 @@ const playback = $("playback");
 const status = $("status");
 const transcript = $("transcript");
 const report = $("report");
+const apiKey = $("apiKey");
+let mode = null;
+let apiMaxMb = 25;
 let recorder;
 let stream;
 let chunks = [];
@@ -14,6 +17,64 @@ let selectedAudio;
 let startedAt;
 let timerInterval;
 let audioUrl;
+
+function selectMode(nextMode) {
+  mode = nextMode;
+  $("modeScreen").hidden = true;
+  $("appScreen").hidden = false;
+  $("changeModeButton").hidden = false;
+  $("apiPanel").hidden = mode !== "api";
+  $("modeLabel").textContent = mode === "api" ? "OPENAI API" : "ЛОКАЛЬНЫЙ РЕЖИМ";
+  $("fileHint").textContent = `m4a, mp3, wav, webm, ogg, mp4 · до ${mode === "api" ? apiMaxMb : 100} МБ`;
+  $("privacyNote").textContent = mode === "api"
+    ? "Аудио и текст отправляются в OpenAI. Обработка оплачивается по тарифам API."
+    : "Аудио обрабатывается локально. Текст для анализа отправляется в Codex.";
+  setStatus("Готово к записи или загрузке аудио.");
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+document.querySelectorAll(".mode-option").forEach((button) => {
+  button.addEventListener("click", () => selectMode(button.dataset.mode));
+});
+
+fetch("/api/health")
+  .then((response) => response.json())
+  .then((config) => {
+    apiMaxMb = config.api_max_mb || 25;
+    if (!config.local_available) {
+      const localButton = document.querySelector('.mode-option[data-mode="local"]');
+      localButton.disabled = true;
+      localButton.querySelector("small").textContent = "Только после запуска на компьютере";
+    }
+  })
+  .catch(() => {});
+
+$("changeModeButton").addEventListener("click", () => {
+  if (recorder?.state === "recording") {
+    recorder.stop();
+    stream?.getTracks().forEach((track) => track.stop());
+    recordButton.classList.remove("is-recording");
+    $("recordLabel").textContent = "Начать запись";
+    stopTimer();
+  }
+  apiKey.value = "";
+  mode = null;
+  $("modeScreen").hidden = false;
+  $("appScreen").hidden = true;
+  $("changeModeButton").hidden = true;
+  window.scrollTo({ top: 0, behavior: "instant" });
+});
+
+function currentKey() {
+  if (mode !== "api") return "";
+  const key = apiKey.value.trim();
+  if (!key) {
+    setStatus("Введи ключ OpenAI API, чтобы продолжить.", "error");
+    apiKey.focus();
+    return null;
+  }
+  return key;
+}
 
 function setStatus(message, kind = "normal") {
   status.textContent = message;
@@ -99,8 +160,10 @@ recordButton.addEventListener("click", async () => {
 audioFile.addEventListener("change", () => {
   const file = audioFile.files?.[0];
   if (!file) return;
-  if (file.size > 100 * 1024 * 1024) {
-    setStatus("Файл больше 100 МБ. Выберите запись поменьше.", "error");
+  const maxMb = mode === "api" ? apiMaxMb : 100;
+  if (file.size > maxMb * 1024 * 1024) {
+    setStatus(`Файл больше ${maxMb} МБ. Выберите запись поменьше.`, "error");
+    audioFile.value = "";
     return;
   }
   setAudio(file, file.name);
@@ -118,6 +181,13 @@ async function readError(response) {
 
 transcribeButton.addEventListener("click", async () => {
   if (!selectedAudio) return;
+  const key = currentKey();
+  if (key === null) return;
+  const maxMb = mode === "api" ? apiMaxMb : 100;
+  if (selectedAudio.size > maxMb * 1024 * 1024) {
+    setStatus(`Для этого режима нужен файл до ${maxMb} МБ.`, "error");
+    return;
+  }
   transcribeButton.disabled = true;
   setStatus(
     "Расшифровка идёт. Длинная запись может занять несколько минут.",
@@ -125,6 +195,8 @@ transcribeButton.addEventListener("click", async () => {
   );
   const form = new FormData();
   form.append("audio", selectedAudio);
+  form.append("mode", mode);
+  if (key) form.append("api_key", key);
   try {
     const response = await fetch("/api/transcribe", {
       method: "POST",
@@ -151,6 +223,8 @@ analyzeButton.addEventListener("click", async () => {
     transcript.focus();
     return;
   }
+  const key = currentKey();
+  if (key === null) return;
   analyzeButton.disabled = true;
   setStatus("Анализ встречи идёт. Это может занять несколько минут.", "busy");
   try {
@@ -161,6 +235,8 @@ analyzeButton.addEventListener("click", async () => {
         transcript: text,
         manager: $("manager").value.trim() || "не указан",
         meeting_date: $("meetingDate").value || "не указана",
+        mode,
+        api_key: key,
       }),
     });
     if (!response.ok) throw new Error(await readError(response));

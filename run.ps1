@@ -11,7 +11,7 @@ if (-not (Test-Path -LiteralPath '.venv\Scripts\python.exe')) {
 }
 
 $python = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
-& $python -m pip install -r requirements.txt
+& $python -m pip install -r requirements-local.txt
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host 'Откройте http://127.0.0.1:8060/'
